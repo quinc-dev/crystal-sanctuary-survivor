@@ -142,16 +142,22 @@ export class EnemyManager {
     }
 
     // Health bar above enemy head (bilboard styling)
+    const hpGroup = new THREE.Group();
+    hpGroup.position.set(0, type === 'golem' ? 2.6 : 1.6, 0);
+    hpGroup.visible = false; // Hidden until damaged
+
     const hpBg = new THREE.Mesh(this.hpBarGeo, this.hpBarBgMat);
-    hpBg.position.set(0, type === 'golem' ? 2.6 : 1.6, 0);
     hpBg.renderOrder = 999;
-    group.add(hpBg);
+    hpGroup.add(hpBg);
 
     const hpFillMat = new THREE.MeshBasicMaterial({ color: 0xef4444, depthTest: false });
     const hpFill = new THREE.Mesh(this.hpBarGeo, hpFillMat);
-    hpFill.position.set(0, type === 'golem' ? 2.6 : 1.6, 0.01);
+    hpFill.position.z = 0.01;
     hpFill.renderOrder = 1000;
-    group.add(hpFill);
+    hpGroup.add(hpFill);
+
+    group.add(hpGroup);
+    group.hpGroup = hpGroup;
     group.hpFill = hpFill;
 
     return group;
@@ -300,6 +306,11 @@ export class EnemyManager {
       const e = this.enemies[i];
       if (!e.isAlive) {
         this.enemyGroup.remove(e.group);
+        e.group.traverse(child => {
+          if (child.material && child.material !== this.eyeMat && child.material !== this.hpBarMat && child.material !== this.hpBarBgMat) {
+            child.material.dispose();
+          }
+        });
         this.enemies.splice(i, 1);
         continue;
       }
@@ -397,11 +408,17 @@ export class EnemyManager {
 
       e.group.position.set(e.x, e.y, e.z);
 
-      // Health bar fill update
-      if (e.group.hpFill) {
-        const pct = Math.max(0, Math.min(1, e.hp / e.maxHp));
-        e.group.hpFill.scale.set(pct, 1, 1);
-        e.group.hpFill.position.x = -(1 - pct) * 0.6;
+      // Health bar billboard facing camera + visibility gating
+      if (e.group.hpGroup) {
+        const isDamaged = e.hp < e.maxHp;
+        e.group.hpGroup.visible = isDamaged;
+        if (isDamaged) {
+          const pct = Math.max(0, Math.min(1, e.hp / e.maxHp));
+          e.group.hpFill.scale.set(pct, 1, 1);
+          e.group.hpFill.position.x = -(1 - pct) * 0.6;
+          // Counter-rotate hpGroup so it faces camera regardless of parent group heading
+          e.group.hpGroup.rotation.y = -e.currentAngle;
+        }
       }
 
       // Damage Flash with smooth restitution

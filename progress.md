@@ -85,9 +85,13 @@
 - `playIceSpire()` — crystalline ground crackle (sine 320→840→120 Hz sweep)
 - `playBladeSlash()` — velocity whoosh for javelin impact
 
-### Known State / Next Steps
+### Known State / Polish & 60 FPS Profiling Complete
 - Dev server running on `http://localhost:5173/` (task-476, daemon)
-- Build: `npm run build` → PASS (exit 0, no TS errors)
-- Ice Spire card needs playtesting to tune damage (65) and cooldown (2.4s)
-- Consider adding particle burst VFX on ice spire shatter
-- Consider adding trail particles behind Void Javelins
+- Build: `npm run build` → PASS (exit 0, no errors)
+- **Lag & Profiling Root Causes Fixed**:
+  - `src/weapons.js`: Gỡ bỏ hạt bụi vệt trail sinh ra mỗi frame trên projectile (thủ phạm chính gây nghẽn rác bộ nhớ GC và tụt FPS khi phóng nhiều phi thương).
+  - `src/collectibles.js`: Đặt trần ngân sách hạt nghiêm ngặt (`max 45` active particles) và tái sử dụng bộ nhớ đệm `particleMaterials`.
+  - `src/enemies.js`: 
+    - Khử bỏ sao chép quaternion camera đắt đỏ trên từng quái, thay bằng counter-rotation nhẹ nhàng trên sub-group `hpGroup.rotation.y = -e.currentAngle`.
+    - Dọn dẹp và giải phóng tài nguyên vật liệu `dispose()` triệt để khi quái chết, chặn hoàn toàn rò rỉ bộ nhớ GPU VRAM.
+

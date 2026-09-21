@@ -214,7 +214,8 @@ export class WeaponSystem {
       damage: this.boltDamage,
       pierceRemaining: this.boltPierce,
       hitEnemies: new Set(),
-      trailColor: col
+      trailColor: col,
+      trailTimer: 0
     });
 
     sound.playBoltFire();
@@ -347,7 +348,7 @@ export class WeaponSystem {
   // ------------------------------------------
   // MAIN UPDATE LOOP FOR ALL WEAPONS
   // ------------------------------------------
-  update(dt, player, enemyManager, onEnemyKilled, onDamageDealt) {
+  update(dt, player, enemyManager, onEnemyKilled, onDamageDealt, collectibles = null) {
     const time = performance.now() * 0.001;
 
     // 1. UPDATE ORBITAL SATELLITES & RESONANCE LASERS
@@ -457,6 +458,9 @@ export class WeaponSystem {
           p.hitEnemies.add(e);
           enemyManager.damageEnemy(e, p.damage, 8, p.x, p.z, onEnemyKilled);
           if (onDamageDealt) onDamageDealt(e.x, e.y, e.z, p.damage);
+          if (collectibles) {
+            collectibles.spawnShatter(p.x, p.y, p.z, p.trailColor ? p.trailColor.getHex() : 0x38bdf8, 4);
+          }
           p.pierceRemaining--;
           if (p.pierceRemaining <= 0) break;
         }
@@ -499,6 +503,9 @@ export class WeaponSystem {
         spire.mesh.position.y = spire.peakY;
         if (!spire.hasDamaged) {
           spire.hasDamaged = true;
+          if (collectibles) {
+            collectibles.spawnShatter(spire.x, spire.peakY * 0.8, spire.z, 0xbae6fd, 8);
+          }
           const hits = this.grid.queryRadius(spire.x, spire.z, 2.4);
           for (let h = 0; h < hits.length; h++) {
             const e = hits[h];

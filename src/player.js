@@ -20,6 +20,7 @@ export class Player {
     this.dashTimer = 0;
     this.isDashing = false;
     this.invulnTimer = 0;
+    this.flashTimer = 0;
 
     // Progression
     this.level = 1;
@@ -351,12 +352,8 @@ export class Player {
     const actualDamage = Math.max(1, amount - this.defense);
     this.hp -= actualDamage;
     this.invulnTimer = 0.4;
+    this.flashTimer = 0.14;
     sound.playHit();
-
-    this.coreMesh.material.color.setHex(0xef4444);
-    setTimeout(() => {
-      this.coreMesh.material.color.setHex(this.hasLegendaryCrown ? 0xfbbf24 : 0x38bdf8);
-    }, 120);
 
     return actualDamage;
   }
@@ -484,6 +481,18 @@ export class Player {
         pc.mesh.geometry.dispose();
         this.phantomClones.splice(i, 1);
       }
+    }
+
+    // Damage Flash with frame-rate independent timer
+    if (this.flashTimer > 0) {
+      this.flashTimer -= dt;
+      this.coreMesh.material.color.setHex(0xff3333);
+      this.coreMesh.material.emissive.setHex(0xb91c1c);
+    } else {
+      const baseCol = this.hasLegendaryCrown ? 0xfbbf24 : (this.hasAegisShield ? 0x60a5fa : 0x38bdf8);
+      const emissiveCol = this.hasLegendaryCrown ? 0xd97706 : (this.hasAegisShield ? 0x2563eb : 0x0284c7);
+      this.coreMesh.material.color.setHex(baseCol);
+      this.coreMesh.material.emissive.setHex(emissiveCol);
     }
 
     if (this.invulnTimer > 0) {

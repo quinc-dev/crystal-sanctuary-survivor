@@ -533,7 +533,8 @@ class GameApp {
         },
         (dmgX, dmgY, dmgZ, dmgAmount) => {
           this.collectibles.spawnDamageNumber(dmgX, dmgY, dmgZ, dmgAmount);
-        }
+        },
+        this.collectibles
       );
 
       // 5. Collectibles & Particles

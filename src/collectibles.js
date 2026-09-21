@@ -40,6 +40,9 @@ export class CollectibleManager {
     this.particleGroup = new THREE.Group();
     this.scene.add(this.particleGroup);
 
+    // Reusable shared materials mapped by colorHex
+    this.particleMaterials = new Map();
+
     this.fctContainer = document.getElementById('floating-text-container');
     this.lastTextSpawnTime = 0;
   }
@@ -66,9 +69,15 @@ export class CollectibleManager {
     });
   }
 
-  spawnShatter(x, y, z, colorHex = 0x66ccff, count = 8) {
-    const mat = new THREE.MeshBasicMaterial({ color: colorHex });
-    for (let i = 0; i < count; i++) {
+  spawnShatter(x, y, z, colorHex = 0x66ccff, count = 6) {
+    if (this.particles.length >= 45) return; // Hard budget cap
+    let mat = this.particleMaterials.get(colorHex);
+    if (!mat) {
+      mat = new THREE.MeshBasicMaterial({ color: colorHex });
+      this.particleMaterials.set(colorHex, mat);
+    }
+    const spawnCount = Math.min(count, 45 - this.particles.length);
+    for (let i = 0; i < spawnCount; i++) {
       const mesh = new THREE.Mesh(this.particleGeo, mat);
       mesh.position.set(x, y, z);
       this.particleGroup.add(mesh);
