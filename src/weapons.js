@@ -117,14 +117,29 @@ export class WeaponSystem {
     const geo = isHeavy ? this.heavyLanceGeo : this.standardBoltGeo;
     const col = this.boltColors[colorIndex % this.boltColors.length];
 
-    const mat = new THREE.MeshBasicMaterial({ color: col });
-    const mesh = new THREE.Mesh(geo, mat);
-    mesh.position.set(px, py, pz);
-    mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), new THREE.Vector3(dx / len, 0, dz / len));
-    this.projectileGroup.add(mesh);
+    // Compound projectile: Solid inner beam + Outer luminous translucent halo
+    const boltMeshGroup = new THREE.Group();
+
+    const coreMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const coreMesh = new THREE.Mesh(geo, coreMat);
+    coreMesh.scale.set(0.6, 0.6, 0.9);
+    boltMeshGroup.add(coreMesh);
+
+    const haloMat = new THREE.MeshBasicMaterial({
+      color: col,
+      transparent: true,
+      opacity: 0.85,
+      blending: THREE.AdditiveBlending
+    });
+    const haloMesh = new THREE.Mesh(geo, haloMat);
+    boltMeshGroup.add(haloMesh);
+
+    boltMeshGroup.position.set(px, py, pz);
+    boltMeshGroup.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), new THREE.Vector3(dx / len, 0, dz / len));
+    this.projectileGroup.add(boltMeshGroup);
 
     this.projectiles.push({
-      mesh,
+      mesh: boltMeshGroup,
       x: px,
       y: py,
       z: pz,
@@ -277,7 +292,9 @@ export class WeaponSystem {
 
       if (p.life <= 0 || p.pierceRemaining <= 0) {
         this.projectileGroup.remove(p.mesh);
-        p.mesh.material.dispose();
+        p.mesh.traverse(child => {
+          if (child.material) child.material.dispose();
+        });
         this.projectiles.splice(i, 1);
       }
     }

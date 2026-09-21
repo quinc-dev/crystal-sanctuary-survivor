@@ -106,6 +106,140 @@ export function createFloorTexture(size = 2048) {
   return texture;
 }
 
+// Procedural Normal Map for Floor Relievo and 3D Depth
+export function createFloorNormalTexture(size = 1024) {
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+
+  // Neutral tangent-space normal (RGB: 128, 128, 255)
+  ctx.fillStyle = 'rgb(128, 128, 255)';
+  ctx.fillRect(0, 0, size, size);
+
+  // Beveled tile grooves in normal map
+  const tileSize = 64 * (size / 2048);
+  ctx.lineWidth = 2;
+  for (let x = 0; x <= size; x += tileSize) {
+    ctx.strokeStyle = 'rgb(90, 128, 255)'; // light bevel left
+    ctx.beginPath();
+    ctx.moveTo(x - 1, 0);
+    ctx.lineTo(x - 1, size);
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgb(166, 128, 255)'; // light bevel right
+    ctx.beginPath();
+    ctx.moveTo(x + 1, 0);
+    ctx.lineTo(x + 1, size);
+    ctx.stroke();
+  }
+  for (let y = 0; y <= size; y += tileSize) {
+    ctx.strokeStyle = 'rgb(128, 90, 255)';
+    ctx.beginPath();
+    ctx.moveTo(0, y - 1);
+    ctx.lineTo(size, y - 1);
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgb(128, 166, 255)';
+    ctx.beginPath();
+    ctx.moveTo(0, y + 1);
+    ctx.lineTo(size, y + 1);
+    ctx.stroke();
+  }
+
+  // Concentric engraved rune relief in normal map
+  const cx = size / 2;
+  const cy = size / 2;
+  const scale = size / 2048;
+
+  function drawNormalRing(r, width) {
+    ctx.lineWidth = width;
+    ctx.strokeStyle = 'rgb(148, 148, 240)';
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * scale, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  drawNormalRing(180, 2);
+  drawNormalRing(320, 3);
+  drawNormalRing(580, 2.5);
+  drawNormalRing(980, 2);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.ClampToEdgeWrapping;
+  texture.wrapT = THREE.ClampToEdgeWrapping;
+  texture.anisotropy = 8;
+  return texture;
+}
+
+// Procedural Roughness / Specular Map for Floor
+export function createFloorRoughnessTexture(size = 1024) {
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+
+  // Baseline polished marble/granite roughness (~0.4)
+  ctx.fillStyle = 'rgb(105, 105, 105)';
+  ctx.fillRect(0, 0, size, size);
+
+  // Grout lines are rougher (higher roughness, lighter grey ~0.8)
+  const tileSize = 64 * (size / 2048);
+  ctx.strokeStyle = 'rgb(210, 210, 210)';
+  ctx.lineWidth = 2;
+  for (let x = 0; x <= size; x += tileSize) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, size);
+    ctx.stroke();
+  }
+  for (let y = 0; y <= size; y += tileSize) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(size, y);
+    ctx.stroke();
+  }
+
+  // Sacred Mandala runes are glazed/vitrified (super smooth/specular, darker grey ~0.15)
+  const cx = size / 2;
+  const cy = size / 2;
+  const scale = size / 2048;
+
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = 'rgb(35, 35, 35)';
+  [180, 240, 320, 420, 580, 780, 980].forEach(r => {
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * scale, 0, Math.PI * 2);
+    ctx.stroke();
+  });
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.ClampToEdgeWrapping;
+  texture.wrapT = THREE.ClampToEdgeWrapping;
+  texture.anisotropy = 8;
+  return texture;
+}
+
+// Soft radial particle glow texture
+export function createGlowDotTexture(size = 128) {
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+
+  const half = size / 2;
+  const grad = ctx.createRadialGradient(half, half, 0, half, half, half);
+  grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+  grad.addColorStop(0.25, 'rgba(125, 211, 252, 0.85)');
+  grad.addColorStop(0.6, 'rgba(56, 189, 248, 0.25)');
+  grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, size, size);
+
+  return new THREE.CanvasTexture(canvas);
+}
+
 export function createRingPulseTexture(size = 256) {
   const canvas = document.createElement('canvas');
   canvas.width = size;

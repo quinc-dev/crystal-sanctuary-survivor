@@ -1,7 +1,7 @@
 // Main Game Controller & Three.js Engine Orchestration
 import * as THREE from 'three';
 import { sound } from './audio.js';
-import { createFloorTexture } from './textures.js';
+import { createFloorTexture, createFloorNormalTexture, createFloorRoughnessTexture, createGlowDotTexture } from './textures.js';
 import { SpatialGrid } from './spatialGrid.js';
 import { Player } from './player.js';
 import { EnemyManager } from './enemies.js';
@@ -93,18 +93,30 @@ class GameApp {
     fillLight.position.set(-20, 20, -20);
     this.scene.add(fillLight);
 
-    // Procedural Floor
+    // Procedural Floor with Normal & Roughness maps for rich specular reflections
     const floorTexture = createFloorTexture(2048);
-    const floorGeo = new THREE.PlaneGeometry(220, 220, 1, 1);
+    const floorNormal = createFloorNormalTexture(1024);
+    const floorRoughness = createFloorRoughnessTexture(1024);
+
+    const floorGeo = new THREE.PlaneGeometry(240, 240, 1, 1);
     floorGeo.rotateX(-Math.PI / 2);
     const floorMat = new THREE.MeshStandardMaterial({
       map: floorTexture,
+      normalMap: floorNormal,
+      normalScale: new THREE.Vector2(0.65, 0.65),
+      roughnessMap: floorRoughness,
       roughness: 0.35,
-      metalness: 0.15
+      metalness: 0.25
     });
     this.floorMesh = new THREE.Mesh(floorGeo, floorMat);
     this.floorMesh.receiveShadow = true;
     this.scene.add(this.floorMesh);
+
+    // Ethereal Outer Crystal Monolith Pillars (Boundary landmarks)
+    this._initSanctuaryMonoliths();
+
+    // Floating Atmospheric Starlight Motes (Drifting particles)
+    this._initAtmosphereMotes();
 
     // Systems
     this.spatialGrid = new SpatialGrid(5.0);
@@ -168,6 +180,126 @@ class GameApp {
         svg.style.opacity = isMuted ? '0.35' : '1.0';
       }
     });
+  }
+
+  _initSanctuaryMonoliths() {
+    this.monolithGroup = new THREE.Group();
+    this.scene.add(this.monolithGroup);
+
+    // Ethereal crystal obelisk geometry
+    const pillarGeo = new THREE.CylinderGeometry(0.8, 1.8, 14, 6);
+    const capGeo = new THREE.ConeGeometry(1.2, 3.5, 6);
+
+    const pillarMat = new THREE.MeshStandardMaterial({
+      color: 0x1e293b,
+      emissive: 0x0f172a,
+      roughness: 0.25,
+      metalness: 0.4,
+      flatShading: true
+    });
+
+    const crystalCapMat = new THREE.MeshStandardMaterial({
+      color: 0x38bdf8,
+      emissive: 0x0284c7,
+      emissiveIntensity: 1.2,
+      roughness: 0.1,
+      metalness: 0.5,
+      flatShading: true
+    });
+
+    // Place 16 monolithic pillars along the sacred sanctuary perimeter (radius 88-92)
+    const pillarCount = 16;
+    for (let i = 0; i < pillarCount; i++) {
+      const angle = (i / pillarCount) * Math.PI * 2;
+      const dist = 90;
+      const px = Math.cos(angle) * dist;
+      const pz = Math.sin(angle) * dist;
+
+      const pGroup = new THREE.Group();
+      pGroup.position.set(px, 0, pz);
+
+      const pillarMesh = new THREE.Mesh(pillarGeo, pillarMat);
+      pillarMesh.position.y = 7;
+      pillarMesh.castShadow = true;
+      pillarMesh.receiveShadow = true;
+      pGroup.add(pillarMesh);
+
+      const capMesh = new THREE.Mesh(capGeo, crystalCapMat);
+      capMesh.position.y = 15.5;
+      capMesh.castShadow = true;
+      pGroup.add(capMesh);
+
+      // Light beacon hovering at top of each pillar
+      if (i % 4 === 0) {
+        const beaconLight = new THREE.PointLight(0x38bdf8, 2.0, 32, 1.6);
+        beaconLight.position.y = 16.5;
+        pGroup.add(beaconLight);
+      }
+
+      this.monolithGroup.add(pGroup);
+    }
+  }
+
+  _initAtmosphereMotes() {
+    // 250 floating stardust motes that drift around the sanctuary
+    const moteCount = 280;
+    const geometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(moteCount * 3);
+    const scales = new Float32Array(moteCount);
+    const speeds = new Float32Array(moteCount);
+
+    for (let i = 0; i < moteCount; i++) {
+      positions[i * 3] = (Math.random() - 0.5) * 160;
+      positions[i * 3 + 1] = 0.5 + Math.random() * 8.5; // Hovering between 0.5 and 9m
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 160;
+
+      scales[i] = 0.5 + Math.random() * 1.5;
+      speeds[i] = 0.2 + Math.random() * 0.8;
+    }
+
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+    const moteTexture = createGlowDotTexture(128);
+    const material = new THREE.PointsMaterial({
+      size: 1.4,
+      map: moteTexture,
+      transparent: true,
+      opacity: 0.65,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      color: 0x93c5fd
+    });
+
+    this.motePoints = new THREE.Points(geometry, material);
+    this.moteSpeeds = speeds;
+    this.scene.add(this.motePoints);
+  }
+
+  _updateAtmosphereMotes(dt, time) {
+    if (!this.motePoints) return;
+    const posAttr = this.motePoints.geometry.attributes.position;
+    const array = posAttr.array;
+    const count = array.length / 3;
+
+    for (let i = 0; i < count; i++) {
+      const idx = i * 3;
+      // Gentle horizontal drift + vertical wave
+      array[idx] += Math.sin(time * 0.5 + i) * dt * 0.8;
+      array[idx + 1] += Math.cos(time * 0.8 + i) * dt * 0.4;
+      array[idx + 2] += Math.cos(time * 0.5 + i) * dt * 0.8;
+
+      // Wrap around bounds relative to player
+      const dx = array[idx] - this.player.x;
+      const dz = array[idx + 2] - this.player.z;
+      if (dx > 80) array[idx] -= 160;
+      if (dx < -80) array[idx] += 160;
+      if (dz > 80) array[idx + 2] -= 160;
+      if (dz < -80) array[idx + 2] += 160;
+
+      if (array[idx + 1] < 0.4) array[idx + 1] = 8.5;
+      if (array[idx + 1] > 9.0) array[idx + 1] = 0.5;
+    }
+    posAttr.needsUpdate = true;
   }
 
   _onResize() {
@@ -410,7 +542,10 @@ class GameApp {
       // 5. Collectibles & Particles
       this.collectibles.update(dt, this.player, this.camera);
 
-      // 6. HUD
+      // 6. Atmospheric Starlight Motes
+      this._updateAtmosphereMotes(dt, this.gameTime);
+
+      // 7. HUD
       this._updateHUD();
     }
 

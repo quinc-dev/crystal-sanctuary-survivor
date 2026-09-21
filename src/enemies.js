@@ -69,69 +69,86 @@ export class EnemyManager {
     this.hpBarGeo = new THREE.PlaneGeometry(1.2, 0.15);
   }
 
-  // Create full 3D compound mesh for an enemy
+  // Create full 3D compound mesh for an enemy with dedicated per-instance materials
   _createEnemyMesh(type) {
     const group = new THREE.Group();
 
     if (type === 'crawler') {
-      // Main Body
-      const body = new THREE.Mesh(this.crawlerBodyGeo, this.crawlerMat);
+      // Main Body: Faceted crystalline emerald carapace with edge shine
+      const bodyMat = this.crawlerMat.clone();
+      const body = new THREE.Mesh(this.crawlerBodyGeo, bodyMat);
       body.castShadow = true;
       group.add(body);
+      group.bodyMesh = body;
 
       // Horn
-      const horn = new THREE.Mesh(this.crawlerHornGeo, this.crawlerMat);
+      const horn = new THREE.Mesh(this.crawlerHornGeo, bodyMat);
       horn.position.set(0, 0.4, 0.7);
       group.add(horn);
 
-      // Glowing Eyes
-      const eyeL = new THREE.Mesh(this.eyeGeo, this.eyeMat);
+      // Glowing Eyes: Intense ruby emissive gems
+      const eyeMat = new THREE.MeshBasicMaterial({ color: 0xff3333 });
+      const eyeL = new THREE.Mesh(this.eyeGeo, eyeMat);
       eyeL.position.set(0.3, 0.2, 0.75);
       group.add(eyeL);
 
-      const eyeR = new THREE.Mesh(this.eyeGeo, this.eyeMat);
+      const eyeR = new THREE.Mesh(this.eyeGeo, eyeMat);
       eyeR.position.set(-0.3, 0.2, 0.75);
       group.add(eyeR);
 
     } else if (type === 'spore') {
-      const body = new THREE.Mesh(this.sporeBodyGeo, this.sporeMat);
+      const bodyMat = this.sporeMat.clone();
+      const body = new THREE.Mesh(this.sporeBodyGeo, bodyMat);
       body.castShadow = true;
       group.add(body);
+      group.bodyMesh = body;
 
       // Orbiting halo shards
-      const shardGeo = new THREE.TetrahedronGeometry(0.25, 0);
-      const shard1 = new THREE.Mesh(shardGeo, this.eyeMat);
+      const shardMat = new THREE.MeshStandardMaterial({
+        color: 0xf43f5e,
+        emissive: 0xbe123c,
+        emissiveIntensity: 1.2,
+        roughness: 0.1,
+        metalness: 0.5,
+        flatShading: true
+      });
+      const shardGeo = new THREE.TetrahedronGeometry(0.28, 0);
+
+      const shard1 = new THREE.Mesh(shardGeo, shardMat);
       shard1.position.set(1.4, 0, 0);
       group.add(shard1);
       group.shard1 = shard1;
 
-      const shard2 = new THREE.Mesh(shardGeo, this.eyeMat);
+      const shard2 = new THREE.Mesh(shardGeo, shardMat);
       shard2.position.set(-1.4, 0, 0);
       group.add(shard2);
       group.shard2 = shard2;
 
     } else {
-      // Golem
-      const body = new THREE.Mesh(this.golemBodyGeo, this.golemMat);
+      // Golem: Colossal Amber Titan with faceted obsidian joints
+      const bodyMat = this.golemMat.clone();
+      const body = new THREE.Mesh(this.golemBodyGeo, bodyMat);
       body.castShadow = true;
       group.add(body);
+      group.bodyMesh = body;
 
-      const leftShoulder = new THREE.Mesh(this.golemShoulderGeo, this.golemMat);
+      const leftShoulder = new THREE.Mesh(this.golemShoulderGeo, bodyMat);
       leftShoulder.position.set(1.6, 0.8, 0);
       group.add(leftShoulder);
 
-      const rightShoulder = new THREE.Mesh(this.golemShoulderGeo, this.golemMat);
+      const rightShoulder = new THREE.Mesh(this.golemShoulderGeo, bodyMat);
       rightShoulder.position.set(-1.6, 0.8, 0);
       group.add(rightShoulder);
     }
 
-    // Health bar above enemy head
+    // Health bar above enemy head (bilboard styling)
     const hpBg = new THREE.Mesh(this.hpBarGeo, this.hpBarBgMat);
     hpBg.position.set(0, type === 'golem' ? 2.6 : 1.6, 0);
     hpBg.renderOrder = 999;
     group.add(hpBg);
 
-    const hpFill = new THREE.Mesh(this.hpBarGeo, this.hpBarMat);
+    const hpFillMat = new THREE.MeshBasicMaterial({ color: 0xef4444, depthTest: false });
+    const hpFill = new THREE.Mesh(this.hpBarGeo, hpFillMat);
     hpFill.position.set(0, type === 'golem' ? 2.6 : 1.6, 0.01);
     hpFill.renderOrder = 1000;
     group.add(hpFill);
@@ -387,12 +404,21 @@ export class EnemyManager {
         e.group.hpFill.position.x = -(1 - pct) * 0.6;
       }
 
-      // Damage Flash
-      if (e.flashTimer > 0) {
-        e.flashTimer -= dt;
-        e.group.children[0].material.color.setHex(0xffffff);
-      } else {
-        e.group.children[0].material.color.copy(e.defaultColor);
+      // Damage Flash with smooth restitution
+      const targetMesh = e.group.bodyMesh || e.group.children[0];
+      if (targetMesh && targetMesh.material) {
+        if (e.flashTimer > 0) {
+          e.flashTimer -= dt;
+          targetMesh.material.color.setHex(0xffffff);
+          if (targetMesh.material.emissive) targetMesh.material.emissive.setHex(0xffffff);
+        } else {
+          targetMesh.material.color.copy(e.defaultColor);
+          if (targetMesh.material.emissive) {
+            if (e.type === 'crawler') targetMesh.material.emissive.setHex(0x064e3b);
+            else if (e.type === 'spore') targetMesh.material.emissive.setHex(0x6b21a8);
+            else targetMesh.material.emissive.setHex(0x78350f);
+          }
+        }
       }
     }
   }

@@ -24,4 +24,10 @@
   - Cập nhật dependency `three`: `^0.170.0` ➔ `^0.186.0`.
   - Tương thích 100% với WebGLRenderer modern pipeline, `SRGBColorSpace`, `ACESFilmicToneMapping`, và `PCFSoftShadowMap`.
   - Build production thành công không có lỗi (`npm run build` passed).
+- [x] NÂNG CẤP ĐỒ HỌA TOÀN DIỆN (AESTHETIC & LIGHTING OVERHAUL):
+  - **Sàn Thánh Địa PBR Cao Cấp**: Tạo và nạp `Normal Map` (vát cạnh gạch, rãnh chạm khắc cổ ngữ) và `Roughness Map` tương phản cao (vệt hoa văn bóng gương, đường vữa lì nhám).
+  - **Hệ Thống Trụ Cột Tinh Thể Ranh Giới (Sanctuary Monoliths)**: 16 cột thạch anh khổng lồ dựng quanh chu vi thánh địa với chóp ngọc phát quang và đèn hải đăng ma thuật tỏa sáng chân thực.
+  - **Hạt Bụi Sao Khí Quyển Lơ Lửng (Atmospheric Starlight Motes)**: 280 hạt ánh sáng stardust trôi bồng bềnh và nhấp nhô theo sóng biển ánh sáng trên mặt đất.
+  - **Đạn Ma Thuật 2 Lớp (Dual-Layered Luminous Bolts)**: Lõi chùm đạn trắng rực bên trong bọc ngoài bởi vầng hào quang phát xạ đa sắc (Additive Blending).
+  - **Quái Vật Per-Instance Shaders**: Tách riêng vật liệu cho từng quái, mắt hồng ngọc phát quang ruby, hiệu ứng chớp sáng sát thương mượt mà không bị lóa chéo.
 - [x] Build verified clean (`npm run build` passed). JEV QA Audit: PASSED.
