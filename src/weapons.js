@@ -1,4 +1,4 @@
-// Tri-Synergy Weapon System with Dramatic 3D Visual Evolutions
+// Complete 3D Visual Overhaul: 4 Distinct Tangible Weapon Archetypes
 import * as THREE from 'three';
 import { sound } from './audio.js';
 import { createRingPulseTexture } from './textures.js';
@@ -8,47 +8,74 @@ export class WeaponSystem {
     this.scene = scene;
     this.grid = spatialGrid;
 
-    // 1. Orbital Resonance Satellites
+    // ==========================================
+    // 1. WEAPON 1: LĂNG KÍNH VỆ TINH THÁI DƯƠNG (Solar Prism Orbitals)
+    // Multi-faceted crystalline polyhedra with rotating laser mirrors
+    // ==========================================
     this.orbitalCount = 2;
-    this.orbitalRadius = 3.6;
+    this.orbitalRadius = 3.8;
     this.orbitalSpeed = 3.0;
-    this.orbitalDamage = 22;
+    this.orbitalDamage = 24;
     this.orbitalAngle = 0;
     this.orbitalMeshes = [];
     this.laserSegments = null;
     this.isSuperchargedLaser = false;
     this._initOrbitals();
 
-    // 2. Prismatic Auto-Targeting Bolts
-    this.boltCooldownMax = 0.55;
+    // ==========================================
+    // 2. WEAPON 2: ĐẠI THƯƠNG TINH THỂ XUYÊN KHÔNG (Void Crystal Javelins)
+    // High-speed spinning 3D crystalline spears with corkscrew helix aura
+    // ==========================================
+    this.boltCooldownMax = 0.52;
     this.boltCooldown = 0.1;
     this.boltCount = 1;
-    this.boltDamage = 26;
-    this.boltSpeed = 28;
+    this.boltDamage = 28;
+    this.boltSpeed = 30;
     this.boltPierce = 1;
     this.projectiles = [];
     this._initProjectilesPool();
 
-    // 3. Kinetic Shockwaves
+    // ==========================================
+    // 3. WEAPON 3: BĂNG LONG TRẢM / BÃO BĂNG GAI (Glacial Spire Cascade)
+    // 3D Ice Crystal Spires bursting from ground under clusters of enemies
+    // ==========================================
+    this.glacialActive = false;
+    this.glacialCooldownMax = 2.4;
+    this.glacialCooldown = 1.0;
+    this.glacialDamage = 65;
+    this.glacialRadius = 4.2;
+    this.iceSpires = [];
+    this._initGlacialSystem();
+
+    // ==========================================
+    // 4. WEAPON 4: ĐỊA CHẤN THẦN TỐC & VẾT NỨT HƯ KHÔNG (Ground Rifts & Shockwaves)
+    // Dash shockwave ring + persistent glowing arcane ground rift
+    // ==========================================
     this.shockwaves = [];
     this.shockwaveTexture = createRingPulseTexture();
     this.shockwaveGeo = new THREE.PlaneGeometry(1, 1);
     this.shockwaveGeo.rotateX(-Math.PI / 2);
+
+    this.groundRifts = [];
+    this._initRiftsSystem();
   }
 
+  // ------------------------------------------
+  // 1. ORBITAL SATELLITES WITH 3D CRYSTAL PRISMS
+  // ------------------------------------------
   _initOrbitals() {
     this.orbitalGroup = new THREE.Group();
     this.scene.add(this.orbitalGroup);
 
-    // Laser beam connecting orbitals & player
+    // Dynamic laser beam connecting orbitals & player
     this.laserMat = new THREE.LineBasicMaterial({
       color: 0x38bdf8,
       transparent: true,
-      opacity: 0.9,
+      opacity: 0.92,
       blending: THREE.AdditiveBlending
     });
     const lineGeo = new THREE.BufferGeometry();
-    const positions = new Float32Array(64 * 3);
+    const positions = new Float32Array(128 * 3);
     lineGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     this.laserSegments = new THREE.LineSegments(lineGeo, this.laserMat);
     this.scene.add(this.laserSegments);
@@ -60,24 +87,38 @@ export class WeaponSystem {
     while (this.orbitalMeshes.length) {
       const m = this.orbitalMeshes.pop();
       this.orbitalGroup.remove(m);
+      m.traverse(child => {
+        if (child.material) child.material.dispose();
+      });
     }
 
-    // Faceted Crystal Shards for Satellites
-    const shardGeo = new THREE.OctahedronGeometry(0.5, 0);
-    const shardMat = new THREE.MeshStandardMaterial({
-      color: this.isSuperchargedLaser ? 0xa855f7 : 0x38bdf8,
-      emissive: this.isSuperchargedLaser ? 0x7e22ce : 0x0284c7,
-      emissiveIntensity: 1.0,
-      roughness: 0.1,
-      metalness: 0.3,
-      flatShading: true
-    });
+    // Compound faceted crystal shard with internal diamond core
+    const outerGeo = new THREE.OctahedronGeometry(0.55, 0);
+    const innerGeo = new THREE.OctahedronGeometry(0.28, 0);
 
     for (let i = 0; i < this.orbitalCount; i++) {
-      const mesh = new THREE.Mesh(shardGeo, shardMat);
-      mesh.castShadow = true;
-      this.orbitalGroup.add(mesh);
-      this.orbitalMeshes.push(mesh);
+      const group = new THREE.Group();
+
+      const outerMat = new THREE.MeshStandardMaterial({
+        color: this.isSuperchargedLaser ? 0xa855f7 : 0x38bdf8,
+        emissive: this.isSuperchargedLaser ? 0x7e22ce : 0x0284c7,
+        emissiveIntensity: 1.2,
+        roughness: 0.1,
+        metalness: 0.4,
+        flatShading: true,
+        transparent: true,
+        opacity: 0.9
+      });
+      const outerMesh = new THREE.Mesh(outerGeo, outerMat);
+      outerMesh.castShadow = true;
+      group.add(outerMesh);
+
+      const innerMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+      const innerMesh = new THREE.Mesh(innerGeo, innerMat);
+      group.add(innerMesh);
+
+      this.orbitalGroup.add(group);
+      this.orbitalMeshes.push(group);
     }
   }
 
@@ -87,24 +128,27 @@ export class WeaponSystem {
     this.rebuildOrbitals();
   }
 
+  // ------------------------------------------
+  // 2. VOID CRYSTAL JAVELINS (Spinning 3D Projectiles)
+  // ------------------------------------------
   _initProjectilesPool() {
     this.projectileGroup = new THREE.Group();
     this.scene.add(this.projectileGroup);
 
-    // Standard Dart
-    this.standardBoltGeo = new THREE.CylinderGeometry(0.12, 0.12, 1.2, 6);
-    this.standardBoltGeo.rotateX(Math.PI / 2);
+    // Standard lance: cylinder already rotated X(PI/2) so its long axis points +Z
+    this.standardLanceGeo = new THREE.CylinderGeometry(0.12, 0.18, 1.5, 6);
+    this.standardLanceGeo.rotateX(Math.PI / 2); // now points toward +Z (travel direction)
 
-    // Evolved Heavy Lance (When boltPierce > 1)
-    this.heavyLanceGeo = new THREE.ConeGeometry(0.3, 2.0, 6);
-    this.heavyLanceGeo.rotateX(Math.PI / 2);
+    // Heavy Javelin: cone already rotated X(PI/2), tip points +Z
+    this.heavyLanceGeo = new THREE.ConeGeometry(0.38, 2.6, 6);
+    this.heavyLanceGeo.rotateX(Math.PI / 2); // tip toward +Z = travel direction
 
-    // Multicolored Bolt Materials
     this.boltColors = [
       new THREE.Color(0x38bdf8), // Frost Cyan
       new THREE.Color(0xf43f5e), // Flame Crimson
       new THREE.Color(0xa855f7), // Arcane Violet
       new THREE.Color(0xfbbf24), // Amber Solar
+      new THREE.Color(0x10b981), // Emerald Astral
     ];
   }
 
@@ -114,32 +158,53 @@ export class WeaponSystem {
     const len = Math.sqrt(dx * dx + dz * dz) || 1;
 
     const isHeavy = this.boltPierce > 1;
-    const geo = isHeavy ? this.heavyLanceGeo : this.standardBoltGeo;
+    const geo = isHeavy ? this.heavyLanceGeo : this.standardLanceGeo;
     const col = this.boltColors[colorIndex % this.boltColors.length];
 
-    // Compound projectile: Solid inner beam + Outer luminous translucent halo
-    const boltMeshGroup = new THREE.Group();
+    const boltGroup = new THREE.Group();
 
+    // Solid inner core
     const coreMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
     const coreMesh = new THREE.Mesh(geo, coreMat);
-    coreMesh.scale.set(0.6, 0.6, 0.9);
-    boltMeshGroup.add(coreMesh);
+    coreMesh.scale.set(0.65, 0.65, 0.95);
+    boltGroup.add(coreMesh);
 
-    const haloMat = new THREE.MeshBasicMaterial({
+    // Outer crystalline energy hull
+    const hullMat = new THREE.MeshStandardMaterial({
       color: col,
+      emissive: col,
+      emissiveIntensity: 1.2,
+      roughness: 0.1,
+      metalness: 0.5,
       transparent: true,
       opacity: 0.85,
-      blending: THREE.AdditiveBlending
+      flatShading: true
     });
-    const haloMesh = new THREE.Mesh(geo, haloMat);
-    boltMeshGroup.add(haloMesh);
+    const hullMesh = new THREE.Mesh(geo, hullMat);
+    boltGroup.add(hullMesh);
 
-    boltMeshGroup.position.set(px, py, pz);
-    boltMeshGroup.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), new THREE.Vector3(dx / len, 0, dz / len));
-    this.projectileGroup.add(boltMeshGroup);
+    // Helix ring: TorusGeometry lies in XY plane.
+    // After boltGroup quaternion aligns group's +Z to travel dir,
+    // the ring's XY plane becomes perpendicular to travel dir (correct cross-section).
+    // Spin ring on Z axis = roll = corkscrew around lance axis.
+    const ringGeo = new THREE.TorusGeometry(0.38, 0.05, 6, 14);
+    const ringMat = new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.9 });
+    const helixRing = new THREE.Mesh(ringGeo, ringMat);
+    // Position ring slightly ahead of center on lance
+    helixRing.position.z = 0.3;
+    boltGroup.add(helixRing);
+    boltGroup.helixRing = helixRing;
+
+    boltGroup.position.set(px, py, pz);
+    // Align group's local +Z to travel direction
+    boltGroup.quaternion.setFromUnitVectors(
+      new THREE.Vector3(0, 0, 1),
+      new THREE.Vector3(dx / len, 0, dz / len)
+    );
+    this.projectileGroup.add(boltGroup);
 
     this.projectiles.push({
-      mesh: boltMeshGroup,
+      mesh: boltGroup,
       x: px,
       y: py,
       z: pz,
@@ -153,6 +218,76 @@ export class WeaponSystem {
     });
 
     sound.playBoltFire();
+  }
+
+  // ------------------------------------------
+  // 3. GLACIAL SPIRE CASCADE (3D Ground Ice Spikes)
+  // ------------------------------------------
+  _initGlacialSystem() {
+    this.iceSpireGroup = new THREE.Group();
+    this.scene.add(this.iceSpireGroup);
+
+    this.spireGeo = new THREE.ConeGeometry(0.5, 3.2, 5);
+    this.spireMat = new THREE.MeshStandardMaterial({
+      color: 0xe0f2fe,
+      emissive: 0x38bdf8,
+      emissiveIntensity: 0.9,
+      roughness: 0.1,
+      metalness: 0.2,
+      flatShading: true,
+      transparent: true,
+      opacity: 0.95
+    });
+  }
+
+  unlockGlacialSpire() {
+    this.glacialActive = true;
+  }
+
+  triggerGlacialSpireEruption(cx, cz) {
+    sound.playIceSpire();
+
+    // Spawn a cluster of 5 sharp 3D ice spires shooting from ground
+    for (let s = 0; s < 5; s++) {
+      const angle = (s / 5) * Math.PI * 2 + Math.random() * 0.4;
+      const dist = s === 0 ? 0 : 0.8 + Math.random() * 1.8;
+      const sx = cx + Math.cos(angle) * dist;
+      const sz = cz + Math.sin(angle) * dist;
+
+      // ConeGeometry points up Y by default — start buried below ground, erupt upward
+      // Only allow small X/Z tilt (no random Y so spires remain upright)
+      const spireMesh = new THREE.Mesh(this.spireGeo, this.spireMat.clone());
+      const tiltX = (Math.random() - 0.5) * 0.28;
+      const tiltZ = (Math.random() - 0.5) * 0.28;
+      const scaleXZ = 0.75 + Math.random() * 0.55;
+      const scaleY  = 0.85 + Math.random() * 0.65;
+      spireMesh.position.set(sx, -1.8, sz);
+      spireMesh.rotation.set(tiltX, 0, tiltZ); // no Y rotation: spires point up
+      spireMesh.scale.set(scaleXZ, scaleY, scaleXZ);
+      this.iceSpireGroup.add(spireMesh);
+
+      this.iceSpires.push({
+        mesh: spireMesh,
+        x: sx,
+        z: sz,
+        startY: -1.8,
+        peakY: 1.6,
+        life: 0,
+        maxLife: 1.5,
+        hasDamaged: false
+      });
+    }
+  }
+
+  // ------------------------------------------
+  // 4. KINETIC SHOCKWAVE & GROUND RIFTS
+  // ------------------------------------------
+  _initRiftsSystem() {
+    this.riftGroup = new THREE.Group();
+    this.scene.add(this.riftGroup);
+
+    this.riftPlaneGeo = new THREE.PlaneGeometry(3.5, 3.5);
+    this.riftPlaneGeo.rotateX(-Math.PI / 2);
   }
 
   createShockwave(x, z, maxRadius = 12, damage = 50) {
@@ -179,8 +314,39 @@ export class WeaponSystem {
       duration: 0.45,
       hitEnemies: new Set()
     });
+
+    // Create a lingering glowing runic ground rift at dash origin
+    this._createGroundRift(x, z, damage * 0.4);
   }
 
+  _createGroundRift(x, z, burnDamage) {
+    const mat = new THREE.MeshBasicMaterial({
+      map: this.shockwaveTexture,
+      color: 0x38bdf8,
+      transparent: true,
+      opacity: 0.8,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    });
+    const mesh = new THREE.Mesh(this.riftPlaneGeo, mat);
+    mesh.position.set(x, 0.04, z);
+    this.riftGroup.add(mesh);
+
+    this.groundRifts.push({
+      mesh,
+      mat,
+      x,
+      z,
+      damage: burnDamage,
+      life: 0,
+      maxLife: 2.0,
+      lastTick: 0
+    });
+  }
+
+  // ------------------------------------------
+  // MAIN UPDATE LOOP FOR ALL WEAPONS
+  // ------------------------------------------
   update(dt, player, enemyManager, onEnemyKilled, onDamageDealt) {
     const time = performance.now() * 0.001;
 
@@ -189,22 +355,22 @@ export class WeaponSystem {
     const orbitalPositions = [];
 
     for (let i = 0; i < this.orbitalMeshes.length; i++) {
-      const mesh = this.orbitalMeshes[i];
+      const group = this.orbitalMeshes[i];
       const angle = this.orbitalAngle + (i * Math.PI * 2) / this.orbitalMeshes.length;
       const ox = player.x + Math.cos(angle) * this.orbitalRadius;
       const oz = player.z + Math.sin(angle) * this.orbitalRadius;
-      const oy = player.y + Math.sin(time * 5 + i) * 0.2;
+      const oy = player.y + Math.sin(time * 5 + i) * 0.25;
 
-      mesh.position.set(ox, oy, oz);
-      mesh.rotation.x += dt * 4;
-      mesh.rotation.y += dt * 5;
+      group.position.set(ox, oy, oz);
+      group.rotation.x += dt * 4;
+      group.rotation.y += dt * 5;
       orbitalPositions.push(new THREE.Vector3(ox, oy, oz));
 
       // Damage enemies touching this orbital
-      const hits = this.grid.queryRadius(ox, oz, 1.4);
+      const hits = this.grid.queryRadius(ox, oz, 1.5);
       for (let h = 0; h < hits.length; h++) {
         const e = hits[h];
-        if (!e.lastOrbitalHit || time - e.lastOrbitalHit > 0.15) {
+        if (!e.lastOrbitalHit || time - e.lastOrbitalHit > 0.14) {
           e.lastOrbitalHit = time;
           const dmg = Math.round(this.orbitalDamage);
           enemyManager.damageEnemy(e, dmg, 4, ox, oz, onEnemyKilled);
@@ -228,7 +394,7 @@ export class WeaponSystem {
       linePositions[lineIdx++] = p1.y;
       linePositions[lineIdx++] = p1.z;
 
-      // Laser between satellite neighbors (forming a sacred laser web!)
+      // Laser between satellite neighbors (forming sacred laser polygon)
       linePositions[lineIdx++] = p1.x;
       linePositions[lineIdx++] = p1.y;
       linePositions[lineIdx++] = p1.z;
@@ -239,7 +405,7 @@ export class WeaponSystem {
     this.laserSegments.geometry.attributes.position.needsUpdate = true;
     this.laserSegments.geometry.setDrawRange(0, lineIdx / 3);
 
-    // 2. PRISMATIC BOLTS WITH MULTI-COLOR ELEMENTS
+    // 2. PRISMATIC BOLTS WITH HELIX SPIN
     this.boltCooldown -= dt;
     if (this.boltCooldown <= 0) {
       const targets = this.grid.queryRadius(player.x, player.z, 32);
@@ -276,7 +442,13 @@ export class WeaponSystem {
       p.x += p.vx * dt;
       p.z += p.vz * dt;
       p.mesh.position.set(p.x, p.y, p.z);
-      p.mesh.rotation.z += dt * 12; // corkscrew rotation
+      // Roll (corkscrew) on Z = around lance forward axis — gives spinning spear look
+      p.mesh.rotation.z += dt * 14;
+      if (p.mesh.helixRing) {
+        // Ring is in local XY plane (perpendicular to lance), spin it on local Z = corkscrew
+        p.mesh.helixRing.rotation.z += dt * 12;
+        p.mesh.helixRing.scale.setScalar(1 + Math.sin(time * 18) * 0.18);
+      }
 
       const hits = this.grid.queryRadius(p.x, p.z, 1.4);
       for (let h = 0; h < hits.length; h++) {
@@ -299,7 +471,58 @@ export class WeaponSystem {
       }
     }
 
-    // 3. KINETIC SHOCKWAVES
+    // 3. GLACIAL SPIRE ERUPTIONS (Auto-trigger under densest enemy cluster)
+    if (this.glacialActive) {
+      this.glacialCooldown -= dt;
+      if (this.glacialCooldown <= 0) {
+        const nearby = this.grid.queryRadius(player.x, player.z, 24);
+        if (nearby.length > 0) {
+          // Pick a random prominent target in swarm
+          const randEnemy = nearby[Math.floor(Math.random() * nearby.length)];
+          this.triggerGlacialSpireEruption(randEnemy.x, randEnemy.z);
+        }
+        this.glacialCooldown = this.glacialCooldownMax;
+      }
+    }
+
+    // Update Ice Spires — erupt up on Y axis, shatter/fade at peak
+    for (let i = this.iceSpires.length - 1; i >= 0; i--) {
+      const spire = this.iceSpires[i];
+      spire.life += dt;
+
+      const riseTime = 0.18;
+      if (spire.life < riseTime) {
+        // Fast upward burst along Y (world vertical)
+        const riseProgress = spire.life / riseTime;
+        spire.mesh.position.y = spire.startY + riseProgress * (spire.peakY - spire.startY);
+      } else {
+        spire.mesh.position.y = spire.peakY;
+        if (!spire.hasDamaged) {
+          spire.hasDamaged = true;
+          const hits = this.grid.queryRadius(spire.x, spire.z, 2.4);
+          for (let h = 0; h < hits.length; h++) {
+            const e = hits[h];
+            enemyManager.damageEnemy(e, this.glacialDamage, 12, spire.x, spire.z, onEnemyKilled);
+            if (onDamageDealt) onDamageDealt(e.x, e.y, e.z, this.glacialDamage);
+          }
+        }
+        // Fade and shrink before removal
+        const fadeStart = spire.maxLife - 0.35;
+        if (spire.life > fadeStart) {
+          const fade = Math.max(0, (spire.maxLife - spire.life) / 0.35);
+          spire.mesh.scale.setScalar(fade * Math.max(spire.mesh.scale.x, 0.01));
+          if (spire.mesh.material) spire.mesh.material.opacity = fade * 0.95;
+        }
+      }
+
+      if (spire.life >= spire.maxLife) {
+        this.iceSpireGroup.remove(spire.mesh);
+        if (spire.mesh.material) spire.mesh.material.dispose();
+        this.iceSpires.splice(i, 1);
+      }
+    }
+
+    // 4. KINETIC SHOCKWAVES
     for (let i = this.shockwaves.length - 1; i >= 0; i--) {
       const sw = this.shockwaves[i];
       sw.life += dt;
@@ -314,7 +537,7 @@ export class WeaponSystem {
         const e = swept[k];
         if (!sw.hitEnemies.has(e)) {
           sw.hitEnemies.add(e);
-          enemyManager.damageEnemy(e, sw.damage, 20, sw.x, sw.z, onEnemyKilled);
+          enemyManager.damageEnemy(e, sw.damage, 22, sw.x, sw.z, onEnemyKilled);
           if (onDamageDealt) onDamageDealt(e.x, e.y, e.z, sw.damage);
         }
       }
@@ -323,6 +546,29 @@ export class WeaponSystem {
         this.scene.remove(sw.mesh);
         sw.mat.dispose();
         this.shockwaves.splice(i, 1);
+      }
+    }
+
+    // 5. GROUND RIFTS (Damage-over-time chasm)
+    for (let i = this.groundRifts.length - 1; i >= 0; i--) {
+      const rift = this.groundRifts[i];
+      rift.life += dt;
+      rift.mat.opacity = Math.max(0, (1 - rift.life / rift.maxLife) * 0.8);
+
+      if (time - rift.lastTick > 0.3) {
+        rift.lastTick = time;
+        const burnt = this.grid.queryRadius(rift.x, rift.z, 2.5);
+        for (let b = 0; b < burnt.length; b++) {
+          const e = burnt[b];
+          enemyManager.damageEnemy(e, rift.damage, 2, rift.x, rift.z, onEnemyKilled);
+          if (onDamageDealt) onDamageDealt(e.x, e.y, e.z, Math.round(rift.damage));
+        }
+      }
+
+      if (rift.life >= rift.maxLife) {
+        this.riftGroup.remove(rift.mesh);
+        rift.mat.dispose();
+        this.groundRifts.splice(i, 1);
       }
     }
   }

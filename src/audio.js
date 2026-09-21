@@ -178,16 +178,60 @@ class SoundEngine {
     const filter = this.ctx.createBiquadFilter();
     filter.type = 'lowpass';
     filter.frequency.setValueAtTime(1200, now);
-
-    gain.gain.setValueAtTime(0.08, now);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.06);
+    filter.Q.value = 4;
 
     osc.connect(filter);
     filter.connect(gain);
     gain.connect(this.masterGain);
 
+    gain.gain.setValueAtTime(0.08, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.06);
+
     osc.start(now);
-    osc.stop(now + 0.07);
+    osc.stop(now + 0.06);
+  }
+
+  // Glacial Ice Spire Eruption (Crystalline ground crackle)
+  playIceSpire() {
+    if (this.isMuted || !this.ctx) return;
+    const now = this.ctx.currentTime;
+
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(320, now);
+    osc.frequency.exponentialRampToValueAtTime(840, now + 0.08);
+    osc.frequency.exponentialRampToValueAtTime(120, now + 0.3);
+
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+
+    osc.start(now);
+    osc.stop(now + 0.35);
+  }
+
+  // Void Blade Whirlwind (High velocity whoosh)
+  playBladeSlash() {
+    if (this.isMuted || !this.ctx) return;
+    const now = this.ctx.currentTime;
+
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(600, now);
+    osc.frequency.exponentialRampToValueAtTime(180, now + 0.16);
+
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+
+    osc.start(now);
+    osc.stop(now + 0.2);
   }
 
   // Crystal enemy shattered

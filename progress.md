@@ -3,7 +3,7 @@
 - [x] Created `task_plan.md`, `findings.md`, and `progress.md`.
 - [x] Fixed Enemy Visibility: Direct 3D scene meshes with glowing ruby eyes, crystal horns, and live 3D floating health bars.
 - [x] Immediate Wave: 16 enemies spawn right in view (radius 8-14) upon clicking Start.
-- [x] Fixed Movement Jitter & Camera- Tăng độ phân giải Three.js Renderer: `setPixelRatio(Math.max(window.devicePixelRatio || 1, 2))` kết hợp `ACESFilmicToneMapping` và exposure 1.15 giúp hình ảnh sắc nét, ánh sáng pha lê trong trẻo.
+- [x] Fixed Movement Jitter & Camera — Tăng độ phân giải Three.js Renderer: `setPixelRatio(Math.max(window.devicePixelRatio || 1, 2))` kết hợp `ACESFilmicToneMapping` và exposure 1.15 giúp hình ảnh sắc nét, ánh sáng pha lê trong trẻo.
 - Mở rộng tầm nhìn Tactical Camera FOV: Camera kéo xa và thoáng hơn (offset `(0, 26, 23)`, fov `42`) giải tỏa hoàn toàn cảm giác ngột ngạt, dồn dập.
 - Tinh chỉnh khoảng cách xuất hiện quái: Khởi điểm ở bán kính 14-20m thay vì áp sát nhân vật, giúp người chơi có không gian phản xạ và cơ động.
 - Thu nhỏ toàn diện UI/UX:
@@ -33,3 +33,61 @@
     - Tinh chỉnh shadow map kích thước `1024x1024` tối ưu.
     - Loại bỏ các pointlights thừa trên các trụ viền monolith, chỉ sử dụng vật liệu tự phát quang emissive giúp tốc độ khung hình mượt mà 60 FPS ổn định.
 - [x] Build verified clean (`npm run build` passed). JEV QA Audit: PASSED.
+
+---
+
+## Session Handoff: 2026-09-21T12:47 — Skills, Weapons & Cards Visual Overhaul
+
+### Completed This Session
+
+#### `src/weapons.js` — 4 Distinct 3D Weapon Archetypes
+1. **Lăng Kính Vệ Tinh Thái Dương (Solar Prism Orbitals)**
+   - Compound crystal: outer OctahedronGeometry (transparent hull) + inner white diamond core
+   - Multi-laser web connecting all satellites to player + between neighbors
+   - Correctly orbits at player.y height using sin bob on Y axis
+2. **Đại Thương Tinh Thể Xuyên Không (Void Crystal Javelins)**
+   - `CylinderGeometry` / `ConeGeometry` both `rotateX(PI/2)` → long axis points local +Z
+   - `setFromUnitVectors(Z→travelDir)` aligns lance to exact travel direction
+   - **Helix ring**: `TorusGeometry` in XY plane = perpendicular cross-section; `rotation.z` = corkscrew
+   - Multi-color hull (5 colors), white solid core for visual depth
+3. **Băng Long Trảm — Glacial Spire Cascade** (NEW WEAPON)
+   - `ConeGeometry` pointing +Y (correct world vertical) — spawns buried at Y=-1.8
+   - Erupts to peakY=1.6 in 0.18s, damages at peak, fades/shrinks
+   - Each spire cloned material for proper per-spire opacity fade
+   - Only X/Z tilt (no random Y rotation) so spires always point skyward
+4. **Địa Chấn / Vết Nứt Hư Không (Ground Rifts)**
+   - `RingPulse` shockwave on dash + lingering arcane ground rift
+   - Rift: damage-over-time (0.3s tick) for 2 seconds after dash
+
+#### `src/player.js` — Dramatic 3D Visual Evolutions (Axis-Correct)
+1. **Aegis Shield** — 3 floating box plates orbit at fixed Y=0 (XZ plane), dome slow-spins on Y
+2. **Crystalline Wings** — 3 feathers per side; flap on Z axis (correct lateral roll), flex on X
+3. **Gravity Runes** — `RingGeometry(rotateX(-PI/2))` lies flat; spin parent `gravGroup.rotation.y`; 3 concentric rings (outer/mid/inner) counter-spin at different speeds
+4. **Solar Crown** — `TorusGeometry(rotateX(PI/2))` horizontal; parent `crownGroup.rotation.y` spins whole crown; 5 gems at fixed XZ positions (no manual time-based orbit), parent rotation does the orbiting
+
+#### Axis Audit Summary (All Fixed)
+| Element | Was Wrong | Fixed To |
+|---|---|---|
+| Gravity outer/mid ring | `rotation.z` | `gravGroup.rotation.y` |
+| Crown halo | `rotation.z` | `crownGroup.rotation.y` |
+| Orbital torus rings | `rotation.z` | `rotation.y` |
+| Wing flap | `rotation.y` | `rotation.z` |
+| Aegis plates | Y-bobbing (vertical) | Fixed XZ plane orbit |
+| Helix ring spin | `rotation.x` | `rotation.z` (corkscrew) |
+| Ice spire tilt | random Y rotation | X/Z only, always points up |
+
+#### `src/cards.js` — 12 Cards, 5 Archetypes
+- Added `glacial_spire` card (Epic, unlocks new weapon, stacks damage+cooldown)
+- All cards linked to corresponding 3D visual activations
+- Synergy system preserved and weights tuned
+
+#### `src/audio.js` — 2 New Sound FX
+- `playIceSpire()` — crystalline ground crackle (sine 320→840→120 Hz sweep)
+- `playBladeSlash()` — velocity whoosh for javelin impact
+
+### Known State / Next Steps
+- Dev server running on `http://localhost:5173/` (task-476, daemon)
+- Build: `npm run build` → PASS (exit 0, no TS errors)
+- Ice Spire card needs playtesting to tune damage (65) and cooldown (2.4s)
+- Consider adding particle burst VFX on ice spire shatter
+- Consider adding trail particles behind Void Javelins
