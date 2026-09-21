@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crystal Sanctuary: Arcane Survivor</title>
+  <!-- Google Fonts: Chakra Petch (Gaming Display) & Be Vietnam Pro (Native Vietnamese typography) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&family=Chakra+Petch:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <!-- Three.js Canvas Container -->
+  <div id="canvas-container"></div>
+
+  <!-- Floating Combat Numbers Layer -->
+  <div id="floating-text-container" class="fct-layer"></div>
+
+  <!-- Top Experience Progress Bar (Full Width Integrated Strip) -->
+  <div class="exp-bar-container">
+    <div id="exp-fill" class="exp-bar-fill"></div>
+    <div class="exp-level-crest">
+      <span id="level-badge" class="level-badge-text">LVL 1</span>
+    </div>
+  </div>
+
+  <!-- Main Game HUD (Organic, Borderless, Immersive) -->
+  <div id="game-hud" class="ui-overlay hidden">
+    <!-- Top Central Stats (Pure Typography, Zero Box Containers) -->
+    <div class="hud-center-cluster">
+      <span id="survival-timer" class="hud-timer-num">00:00</span>
+      <span class="hud-sep">•</span>
+      <span id="kill-count" class="hud-kills-num">0 QUÁI</span>
+    </div>
+
+    <!-- Top Right Mini-Map Radar (Mystic Scrying Pool) -->
+    <div class="radar-wrapper">
+      <canvas id="radar-canvas" width="94" height="94" class="radar-canvas"></canvas>
+    </div>
+
+    <!-- Bottom Left Health Gauge (Direct Viewport Integration) -->
+    <div class="hud-health-cluster">
+      <div class="hp-numeric-row">
+        <span class="hp-label">SINH LỰC</span>
+        <span id="hp-text" class="hp-value">100 / 100</span>
+      </div>
+      <div class="hp-track">
+        <div id="hp-fill" class="hp-fill"></div>
+      </div>
+    </div>
+
+    <!-- Bottom Center Active Abilities (Frameless Luminous Sigils) -->
+    <div class="active-skills-strip">
+      <div class="sigil-slot" title="Lưới Vệ Tinh (Resonance)">
+        <svg class="sigil-svg" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2">
+          <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"></polygon>
+        </svg>
+      </div>
+      <div class="sigil-slot" title="Tia Sáng Đa Phổ (Prismatic)">
+        <svg class="sigil-svg" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="2">
+          <line x1="12" y1="2" x2="12" y2="22"></line>
+          <line x1="17" y1="5" x2="7" y2="19"></line>
+          <line x1="7" y1="5" x2="17" y2="19"></line>
+        </svg>
+      </div>
+      <div class="sigil-slot" title="Địa Chấn Xung Kích (Kinetic)">
+        <svg class="sigil-svg" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
+          <circle cx="12" cy="12" r="9"></circle>
+          <circle cx="12" cy="12" r="4"></circle>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Bottom Right Controls (Direct Floating Prompts) -->
+    <div class="hud-controls-right">
+      <span id="dash-indicator" class="dash-floating-prompt">DASH [SPACE]</span>
+      <button id="btn-mute" class="hud-btn-ghost" title="Bật/Tắt âm thanh">
+        <svg id="svg-volume" class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Start Screen (Cinematic Portal Overlay, No Boxed Card) -->
+  <div id="start-screen" class="modal-backdrop portal-overlay">
+    <div class="cinematic-content">
+      <h1 class="portal-title">CRYSTAL SANCTUARY</h1>
+      <p class="portal-subtitle">Thánh Địa Tinh Thể • Arcane Roguelite 3D</p>
+
+      <div class="portal-controls-ribbon">
+        <div class="ribbon-item">
+          <span class="ribbon-key">WASD</span>
+          <span class="ribbon-desc">Di chuyển</span>
+        </div>
+        <span class="ribbon-sep">|</span>
+        <div class="ribbon-item">
+          <span class="ribbon-key">SPACE / CHUỘT PHẢI</span>
+          <span class="ribbon-desc">Lướt Dash & Sóng Xung Kích</span>
+        </div>
+        <span class="ribbon-sep">|</span>
+        <div class="ribbon-item">
+          <span class="ribbon-key">AUTO-ATTACK</span>
+          <span class="ribbon-desc">Tự động bắn tia ma thuật & Lưới laser</span>
+        </div>
+      </div>
+
+      <button id="btn-start" class="btn-portal-action">
+        BẮT ĐẦU CHIẾN ĐẤU
+      </button>
+    </div>
+  </div>
+
+  <!-- Level Up Modal: 3-Column Arcane Tablet Cards -->
+  <div id="levelup-modal" class="modal-backdrop hidden">
+    <div class="cards-modal-wrapper">
+      <div class="cards-modal-header">
+        <h2 class="cards-headline">KHAI MỞ KỸ NĂNG MA THUẬT</h2>
+        <span class="cards-subhint">Chọn 1 trong 3 kỹ năng cổ ngữ • Nhấn phím số [1], [2], hoặc [3]</span>
+      </div>
+      <div id="card-container" class="cards-column-grid"></div>
+    </div>
+  </div>
+
+  <!-- Game Over Screen (Dramatic Full-Screen Eulogy, No Boxed Card) -->
+  <div id="gameover-modal" class="modal-backdrop hidden">
+    <div class="eulogy-content">
+      <h1 class="eulogy-title">LÕI PHA LÊ TAN VỠ</h1>
+      <p class="eulogy-subtitle">Bạn đã chiến đấu kiên cường bảo vệ thánh địa</p>
+
+      <div class="eulogy-stats-row">
+        <div class="eulogy-stat">
+          <span class="stat-num" id="go-time">00:00</span>
+          <span class="stat-tag">THỜI GIAN SỐNG SÓT</span>
+        </div>
+        <div class="eulogy-divider"></div>
+        <div class="eulogy-stat">
+          <span class="stat-num" id="go-kills">0</span>
+          <span class="stat-tag">QUÁI HẠ GỤC</span>
+        </div>
+        <div class="eulogy-divider"></div>
+        <div class="eulogy-stat">
+          <span class="stat-num" id="go-level">1</span>
+          <span class="stat-tag">CẤP ĐỘ ĐẠT ĐƯỢC</span>
+        </div>
+      </div>
+
+      <button id="btn-restart" class="btn-portal-action btn-danger">
+        TÁI SINH THỬ LẠI
+      </button>
+    </div>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

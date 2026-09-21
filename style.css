@@ -1,0 +1,692 @@
+/* Crystal Sanctuary - Impeccable Roguelite Design System (Organic & Monolithic Architecture) */
+
+:root {
+  --font-display: 'Chakra Petch', sans-serif;
+  --font-content: 'Be Vietnam Pro', sans-serif;
+
+  --bg-dark: #05070d;
+  --panel-slate: rgba(11, 16, 27, 0.85);
+
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-accent: #38bdf8;
+
+  --color-hp: #ef4444;
+  --color-exp: #38bdf8;
+
+  --rarity-common: #94a3b8;
+  --rarity-rare: #3b82f6;
+  --rarity-epic: #a855f7;
+  --rarity-legendary: #f59e0b;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+body, html {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg-dark);
+  font-family: var(--font-content);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+#canvas-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* Floating Combat Damage Numbers */
+.fct-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 15;
+  pointer-events: none;
+}
+
+.fct-number {
+  position: absolute;
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #facc15;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.95), 0 0 12px rgba(250, 204, 21, 0.6);
+  pointer-events: none;
+  letter-spacing: 0.5px;
+}
+
+/* UI Overlay Layer */
+.ui-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.svg-icon {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+}
+
+/* ============================================================
+   1. IN-GAME HUD: ORGANIC, BORDERLESS & INTEGRATED
+   ============================================================ */
+
+/* Top Experience Progress Bar */
+.exp-bar-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 6px;
+  background: rgba(8, 12, 22, 0.95);
+  border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+  z-index: 30;
+}
+
+.exp-bar-fill {
+  width: 0%;
+  height: 100%;
+  background: #38bdf8;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.8);
+  transition: width 0.15s ease-out;
+}
+
+.exp-level-crest {
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #090e1a;
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  border-radius: 999px;
+  padding: 2px 14px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.6);
+}
+
+.level-badge-text {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #38bdf8;
+  letter-spacing: 0.8px;
+}
+
+/* Top Central Stats: Pure Typography, Scaled & Crisp */
+.hud-center-cluster {
+  position: absolute;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
+}
+
+.hud-timer-num, .hud-kills-num {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: #ffffff;
+}
+
+.hud-sep {
+  font-size: 0.85rem;
+  color: rgba(56, 189, 248, 0.4);
+}
+
+/* Top Right Radar: Compact Mystic Scrying Pool */
+.radar-wrapper {
+  position: absolute;
+  top: 18px;
+  right: 20px;
+}
+
+.radar-canvas {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(56, 189, 248, 0.35);
+  background: rgba(5, 9, 16, 0.85);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.7);
+}
+
+/* Bottom Left Health Gauge: Compact, Sleek Bar */
+.hud-health-cluster {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  width: 180px;
+}
+
+.hp-numeric-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+}
+
+.hp-label {
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: #94a3b8;
+}
+
+.hp-value {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.hp-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.hp-fill {
+  width: 100%;
+  height: 100%;
+  background: #ef4444;
+  border-radius: 999px;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.7);
+  transition: width 0.12s ease-out;
+}
+
+/* Bottom Center Active Abilities: Frameless Compact Sigils */
+.active-skills-strip {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 16px;
+}
+
+.sigil-slot {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.4));
+  transition: transform 0.2s;
+}
+
+.sigil-slot:hover {
+  transform: scale(1.15);
+}
+
+.sigil-svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* Bottom Right Controls */
+.hud-controls-right {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.dash-floating-prompt {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: #ffffff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+  transition: opacity 0.15s;
+}
+
+.hud-btn-ghost {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s, transform 0.15s;
+}
+
+.hud-btn-ghost:hover {
+  color: #ffffff;
+  transform: scale(1.1);
+}
+
+/* ============================================================
+   2. START SCREEN: CINEMATIC PORTAL OVERLAY
+   ============================================================ */
+.modal-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(3, 6, 13, 0.88);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  pointer-events: auto;
+}
+
+.cinematic-content {
+  text-align: center;
+  max-width: 640px;
+  padding: 16px;
+}
+
+.portal-title {
+  font-family: var(--font-display);
+  font-size: 2.8rem;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  color: #ffffff;
+  margin-bottom: 6px;
+  text-shadow: 0 4px 20px rgba(56, 189, 248, 0.4);
+}
+
+.portal-subtitle {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin-bottom: 32px;
+  letter-spacing: 0.5px;
+}
+
+.portal-controls-ribbon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 36px;
+  color: var(--text-secondary);
+}
+
+.ribbon-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ribbon-key {
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-accent);
+  letter-spacing: 0.8px;
+}
+
+.ribbon-desc {
+  font-size: 0.82rem;
+  color: #cbd5e1;
+}
+
+.ribbon-sep {
+  color: rgba(255, 255, 255, 0.15);
+  font-weight: 300;
+}
+
+.btn-portal-action {
+  background: #0284c7;
+  border: 1px solid #38bdf8;
+  border-radius: 999px;
+  padding: 13px 44px;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #ffffff;
+  cursor: pointer;
+  letter-spacing: 1px;
+  box-shadow: 0 6px 24px rgba(2, 132, 199, 0.4);
+  transition: transform 0.15s, background 0.15s, box-shadow 0.15s;
+}
+
+.btn-portal-action:hover {
+  transform: translateY(-2px);
+  background: #0369a1;
+  box-shadow: 0 10px 32px rgba(2, 132, 199, 0.6);
+}
+
+.btn-danger {
+  background: #dc2626 !important;
+  border-color: #ef4444 !important;
+  box-shadow: 0 6px 24px rgba(220, 38, 38, 0.45) !important;
+}
+
+.btn-danger:hover {
+  background: #b91c1c !important;
+}
+
+/* ============================================================
+   3. LEVEL UP: CLEAN & MODERN 3-COLUMN UPGRADE CARDS
+   ============================================================ */
+.cards-modal-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 900px;
+  width: 90%;
+}
+
+.cards-modal-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.cards-headline {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #ffffff;
+  margin-bottom: 4px;
+  text-shadow: 0 4px 16px rgba(56, 189, 248, 0.4);
+}
+
+.cards-subhint {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  letter-spacing: 0.5px;
+}
+
+/* 3-Column Grid */
+.cards-column-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  width: 100%;
+}
+
+/* The Upgrade Card Tablet */
+.upgrade-tablet {
+  background: linear-gradient(180deg, #0d1527 0%, #080d1a 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 16px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  pointer-events: auto;
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+  transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.18s, box-shadow 0.18s, background 0.18s;
+}
+
+.upgrade-tablet:hover {
+  transform: translateY(-6px);
+  background: linear-gradient(180deg, #131d36 0%, #0a1122 100%);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.9);
+}
+
+/* Top bar: Key + Rarity */
+.tablet-top {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.tablet-key {
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
+.tablet-rarity {
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.8px;
+}
+
+/* Icon Box */
+.tablet-icon-box {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+  margin-bottom: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: transform 0.2s ease-out;
+}
+
+.upgrade-tablet:hover .tablet-icon-box {
+  transform: scale(1.1);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.clean-icon {
+  width: 36px;
+  height: 36px;
+}
+
+/* Title & Level */
+.tablet-title {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 3px;
+  letter-spacing: 0.3px;
+}
+
+.tablet-level-tag {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #94a3b8;
+  margin-bottom: 12px;
+  letter-spacing: 0.5px;
+}
+
+/* Big Clear Headline (Core Stat) */
+.tablet-headline {
+  width: 100%;
+  font-family: var(--font-display);
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.08);
+  border-radius: 6px;
+  padding: 6px 8px;
+  margin-bottom: 8px;
+  line-height: 1.35;
+}
+
+/* Plain Plain Language Detail */
+.tablet-detail {
+  font-size: 0.8rem;
+  color: #cbd5e1;
+  line-height: 1.4;
+  margin-bottom: 14px;
+  flex-grow: 1;
+}
+
+/* Synergy Combo Note (Only shown when relevant) */
+.tablet-combo-tag {
+  width: 100%;
+  font-size: 0.72rem;
+  color: #fde68a;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 6px;
+  padding: 5px 8px;
+  margin-bottom: 12px;
+  line-height: 1.3;
+}
+
+/* Action Button */
+.tablet-cta-btn {
+  width: 100%;
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #ffffff;
+  background: #0284c7;
+  border-radius: 6px;
+  padding: 8px 0;
+  transition: background 0.15s, transform 0.15s;
+}
+
+.upgrade-tablet:hover .tablet-cta-btn {
+  background: #0ea5e9;
+  transform: translateY(-1px);
+}
+
+/* Rarity Accents */
+.rarity-common {
+  border-color: rgba(148, 163, 184, 0.3);
+}
+.rarity-common .tablet-rarity {
+  background: rgba(148, 163, 184, 0.2);
+  color: #94a3b8;
+}
+
+.rarity-rare {
+  border-color: rgba(56, 189, 248, 0.45);
+}
+.rarity-rare:hover {
+  border-color: #38bdf8;
+  box-shadow: 0 16px 40px rgba(56, 189, 248, 0.25);
+}
+.rarity-rare .tablet-rarity {
+  background: rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+}
+
+.rarity-epic {
+  border-color: rgba(192, 132, 252, 0.45);
+}
+.rarity-epic:hover {
+  border-color: #c084fc;
+  box-shadow: 0 16px 40px rgba(192, 132, 252, 0.25);
+}
+.rarity-epic .tablet-rarity {
+  background: rgba(192, 132, 252, 0.2);
+  color: #c084fc;
+}
+
+.rarity-legendary {
+  border-color: rgba(245, 158, 11, 0.55);
+}
+.rarity-legendary:hover {
+  border-color: #f59e0b;
+  box-shadow: 0 18px 45px rgba(245, 158, 11, 0.35);
+}
+.rarity-legendary .tablet-rarity {
+  background: rgba(245, 158, 11, 0.25);
+  color: #fbbf24;
+}
+
+/* ============================================================
+   4. GAME OVER SCREEN: CINEMATIC EULOGY (NO BOXED CARD)
+   ============================================================ */
+.eulogy-content {
+  text-align: center;
+  max-width: 680px;
+  padding: 20px;
+}
+
+.eulogy-title {
+  font-family: var(--font-display);
+  font-size: 3.2rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #ef4444;
+  margin-bottom: 8px;
+  text-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
+}
+
+.eulogy-subtitle {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  margin-bottom: 40px;
+}
+
+.eulogy-stats-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 36px;
+  margin-bottom: 48px;
+}
+
+.eulogy-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-num {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.stat-tag {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 1px;
+}
+
+.eulogy-divider {
+  width: 1px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.15);
+}
