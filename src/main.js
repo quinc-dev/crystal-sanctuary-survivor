@@ -61,12 +61,13 @@ class GameApp {
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.renderer.setPixelRatio(Math.max(window.devicePixelRatio || 1, 2)); // Crisp high resolution
+    // Capped at 1.5 for ultra-sharp visuals without fillrate bottleneck lag
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.15;
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
     document.getElementById('canvas-container').appendChild(this.renderer.domElement);
 
     // Ethereal Lighting
@@ -76,8 +77,8 @@ class GameApp {
     const sunLight = new THREE.DirectionalLight(0xf8fafc, 1.4);
     sunLight.position.set(25, 45, 25);
     sunLight.castShadow = true;
-    sunLight.shadow.mapSize.width = 2048;
-    sunLight.shadow.mapSize.height = 2048;
+    sunLight.shadow.mapSize.width = 1024;
+    sunLight.shadow.mapSize.height = 1024;
     sunLight.shadow.camera.near = 0.5;
     sunLight.shadow.camera.far = 100;
     const d = 28;
@@ -126,7 +127,7 @@ class GameApp {
     this.player = new Player(this.scene);
     this.upgradeDeck = new UpgradeDeck();
 
-    this.clock = new THREE.Clock();
+    this.lastFrameTime = performance.now();
     window.gameApp = this;
   }
 
@@ -229,13 +230,6 @@ class GameApp {
       capMesh.castShadow = true;
       pGroup.add(capMesh);
 
-      // Light beacon hovering at top of each pillar
-      if (i % 4 === 0) {
-        const beaconLight = new THREE.PointLight(0x38bdf8, 2.0, 32, 1.6);
-        beaconLight.position.y = 16.5;
-        pGroup.add(beaconLight);
-      }
-
       this.monolithGroup.add(pGroup);
     }
   }
@@ -322,7 +316,7 @@ class GameApp {
     this.gameTime = 0;
     this.uiStartScreen.classList.add('hidden');
     this.uiHud.classList.remove('hidden');
-    this.clock.start();
+    this.lastFrameTime = performance.now();
 
     // Spawn 16 enemies in plain view right around player
     this.enemies.spawnInitialWave(this.player.x, this.player.z);
@@ -487,7 +481,10 @@ class GameApp {
   run() {
     requestAnimationFrame(() => this.run());
 
-    const dt = Math.min(this.clock.getDelta(), 0.1);
+    const now = performance.now();
+    const rawDt = (now - this.lastFrameTime) * 0.001;
+    this.lastFrameTime = now;
+    const dt = Math.min(Math.max(rawDt, 0.001), 0.08);
 
     if (this.state === 'PLAYING') {
       this.gameTime += dt;

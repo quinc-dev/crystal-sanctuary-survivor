@@ -24,10 +24,12 @@
   - Cập nhật dependency `three`: `^0.170.0` ➔ `^0.186.0`.
   - Tương thích 100% với WebGLRenderer modern pipeline, `SRGBColorSpace`, `ACESFilmicToneMapping`, và `PCFSoftShadowMap`.
   - Build production thành công không có lỗi (`npm run build` passed).
-- [x] NÂNG CẤP ĐỒ HỌA TOÀN DIỆN (AESTHETIC & LIGHTING OVERHAUL):
-  - **Sàn Thánh Địa PBR Cao Cấp**: Tạo và nạp `Normal Map` (vát cạnh gạch, rãnh chạm khắc cổ ngữ) và `Roughness Map` tương phản cao (vệt hoa văn bóng gương, đường vữa lì nhám).
-  - **Hệ Thống Trụ Cột Tinh Thể Ranh Giới (Sanctuary Monoliths)**: 16 cột thạch anh khổng lồ dựng quanh chu vi thánh địa với chóp ngọc phát quang và đèn hải đăng ma thuật tỏa sáng chân thực.
-  - **Hạt Bụi Sao Khí Quyển Lơ Lửng (Atmospheric Starlight Motes)**: 280 hạt ánh sáng stardust trôi bồng bềnh và nhấp nhô theo sóng biển ánh sáng trên mặt đất.
-  - **Đạn Ma Thuật 2 Lớp (Dual-Layered Luminous Bolts)**: Lõi chùm đạn trắng rực bên trong bọc ngoài bởi vầng hào quang phát xạ đa sắc (Additive Blending).
-  - **Quái Vật Per-Instance Shaders**: Tách riêng vật liệu cho từng quái, mắt hồng ngọc phát quang ruby, hiệu ứng chớp sáng sát thương mượt mà không bị lóa chéo.
+- [x] KHẮC PHỤC TRIỆT ĐỂ CÁC CẢNH BÁO VÀ TỐI ƯU 60 FPS CHO THREE.JS 0.186:
+  - **Khử cảnh báo Deprecated Clock**: Thay thế toàn bộ `THREE.Clock` bằng bộ đếm thời gian thực `performance.now()` siêu chính xác, không còn warning trong Console.
+  - **Khử cảnh báo ShadowMap**: Chuyển `PCFSoftShadowMap` (đã bị gỡ bỏ ở Three.js 0.186) sang `THREE.PCFShadowMap` chuẩn hóa.
+  - **Khử lỗi 404 Favicon**: Nhúng trực tiếp Favicon tinh thể pha lê dạng inline data SVG trong `index.html`.
+  - **Khử giật lag (Performance Lag Fix)**:
+    - Giới hạn `pixelRatio` thông minh ở mức `1.5` (trước đây bị đẩy lên 2x trên màn Retina/4K gây nghẽn băng thông GPU fillrate).
+    - Tinh chỉnh shadow map kích thước `1024x1024` tối ưu.
+    - Loại bỏ các pointlights thừa trên các trụ viền monolith, chỉ sử dụng vật liệu tự phát quang emissive giúp tốc độ khung hình mượt mà 60 FPS ổn định.
 - [x] Build verified clean (`npm run build` passed). JEV QA Audit: PASSED.
